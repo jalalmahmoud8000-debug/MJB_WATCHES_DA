@@ -11,4 +11,7 @@ urlpatterns = [
     
     # URL for a single product detail page
     path('products/<slug:slug>/', views.product_detail, name='product_detail'),
+
+    # URL for the category list page
+    path('categories/', views.CategoryListView.as_view(), name='category_list'),
 ]

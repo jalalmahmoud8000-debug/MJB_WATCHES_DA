@@ -1,10 +1,11 @@
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .models import Product
+from .models import Product, Category
 from .filters import ProductFilter
 from cart.models import Cart, CartItem
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
+from django.db.models import Count
 
 class HomeView(TemplateView):
     template_name = "pages/index.html"
@@ -13,6 +14,16 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['latest_products'] = Product.objects.filter(is_active=True).order_by('-created_at')[:8]
         return context
+
+class CategoryListView(ListView):
+    model = Category
+    template_name = 'catalog/category_list.html'
+    context_object_name = 'categories'
+
+    def get_queryset(self):
+        """ Returns categories that have associated products. """
+        return Category.objects.annotate(product_count=Count('products')).filter(product_count__gt=0)
+
 
 def product_list(request):
     """ 

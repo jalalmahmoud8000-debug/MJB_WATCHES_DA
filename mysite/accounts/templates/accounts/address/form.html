@@ -1,0 +1,24 @@
+
+{% extends "base.html" %}
+
+{% block title %}{% if address %}Edit Address{% else %}Add New Address{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">{% if address %}Edit Address{% else %}Add New Address{% endif %}</div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">{% if address %}Update Address{% else %}Save Address{% endif %}</button>
+                        <a href="{% url 'accounts:address_list' %}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

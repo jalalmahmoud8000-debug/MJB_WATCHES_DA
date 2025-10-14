@@ -1,0 +1,48 @@
+
+{% extends "base.html" %}
+
+{% block title %}Manage Addresses{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Manage Addresses</h1>
+        <a href="{% url 'accounts:address_create' %}" class="btn btn-primary">Add New Address</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        {% for address in addresses %}
+            <div class="col-md-6 mb-4">
+                <div class="card {% if address.is_default %}border-primary{% endif %}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ address.label }} {% if address.is_default %}<span class="badge bg-primary">Default</span>{% endif %}</h5>
+                        <p class="card-text">
+                            {{ address.street }}<br>
+                            {{ address.city }}, {{ address.state }} {{ address.postal_code }}<br>
+                            {{ address.country }}
+                        </p>
+                        <a href="{% url 'accounts:address_update' address.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                        <a href="{% url 'accounts:address_delete' address.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                        {% if not address.is_default %}
+                            <form action="{% url 'accounts:set_default_address' address.pk %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-primary btn-sm">Set as Default</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col">
+                <p>You have no saved addresses.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

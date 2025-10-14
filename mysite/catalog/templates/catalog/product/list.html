@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if category %}{{ category.name }}{% else %}Products{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+    <div class="card">
+        <div class="card-header">
+            <h3>Categories</h3>
+        </div>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item {% if not category %}active{% endif %}">
+                <a href="{% url 'catalog:product_list' %}" class="text-decoration-none {% if not category %}text-white{% else %}text-dark{% endif %}">All</a>
+            </li>
+            {% for c in categories %}
+                <li class="list-group-item {% if category.slug == c.slug %}active{% endif %}">
+                    <a href="{{ c.get_absolute_url }}" class="text-decoration-none {% if category.slug == c.slug %}text-white{% else %}text-dark{% endif %}">{{ c.name }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="product-list">
+        <h1 class="mb-4">{% if category %}{{ category.name }}{% else %}Products{% endif %}</h1>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for product in products %}
+                <div class="col">
+                    <div class="card h-100">
+                        <a href="{{ product.get_absolute_url }}">
+                            {% if product.images.all %}
+                                {% for image in product.images.all %}
+                                    {% if image.is_primary %}
+                                    <img src="{{ image.thumbnail.url }}" class="card-img-top" alt="{{ image.alt_text|default:product.name }}" loading="lazy">
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <img src="https://via.placeholder.com/150x150.png?text=No+Image" class="card-img-top" alt="No image available" loading="lazy">
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-dark">{{ product.name }}</a>
+                            </h5>
+                            <p class="card-text text-muted">${{ product.price }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

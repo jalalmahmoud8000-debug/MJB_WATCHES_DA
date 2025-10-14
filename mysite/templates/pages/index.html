@@ -1,0 +1,84 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Welcome to MyShop!{% endblock %}
+
+{% block content %}
+
+<!-- Hero Carousel -->
+<div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    </div>
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <div class="bg-primary bg-gradient text-white p-5 text-center">
+                <h2>Featured Collection</h2>
+                <p>Check out our hand-picked featured products.</p>
+                <a href="{% url 'catalog:product_list' %}" class="btn btn-light">Shop Now</a>
+            </div>
+        </div>
+        <div class="carousel-item">
+             <div class="bg-secondary bg-gradient text-white p-5 text-center">
+                <h2>New Arrivals</h2>
+                <p>The latest and greatest, just for you.</p>
+                <a href="{% url 'catalog:product_list' %}" class="btn btn-light">Explore</a>
+            </div>
+        </div>
+        <div class="carousel-item">
+             <div class="bg-dark text-white p-5 text-center">
+                <h2>Sale is On!</h2>
+                <p>Get up to 50% off on selected items.</p>
+                <a href="{% url 'catalog:product_list' %}" class="btn btn-light">View Deals</a>
+            </div>
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+
+<div class="container my-5">
+    <!-- New Arrivals Section -->
+    <section class="mb-5">
+        <h2 class="mb-4">New Arrivals</h2>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for product in latest_products %}
+                <div class="col">
+                    <div class="card h-100">
+                        {% if product.images.first %}
+                            <a href="{% url 'catalog:product_detail' slug=product.slug %}">
+                                <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                            </a>
+                        {% else %}
+                             <a href="{% url 'catalog:product_detail' slug=product.slug %}">
+                                <img src="https://via.placeholder.com/200x150.png?text=No+Image" class="card-img-top" alt="Placeholder image">
+                            </a>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text text-muted">{{ product.brand }}</p>
+                            <p class="card-text fw-bold">${{ product.variants.first.price }}</p>
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                             <a href="{% url 'catalog:product_detail' slug=product.slug %}" class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col">
+                    <p>No new products available at the moment.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+{% endblock %}

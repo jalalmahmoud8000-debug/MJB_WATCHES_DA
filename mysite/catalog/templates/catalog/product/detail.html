@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="row g-0">
+        <div class="col-md-6">
+            {% if product.images.all %}
+                {% for image in product.images.all %}
+                    {% if image.is_primary %}
+                    <img src="{{ image.large.url }}" class="img-fluid rounded-start" alt="{{ image.alt_text|default:product.name }}" loading="lazy">
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <img src="https://via.placeholder.com/800x800.png?text=No+Image" class="img-fluid rounded-start" alt="No image available" loading="lazy">
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <div class="card-body">
+                <h1 class="card-title">{{ product.name }}</h1>
+                {% if product.brand %}
+                    <p class="text-muted">Brand: {{ product.brand.name }}</p>
+                {% endif %}
+                <p class="card-text">{{ product.description|linebreaks }}</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="variant" class="form-label">Select Option:</label>
+                        <select class="form-select" id="variant" name="variant_id">
+                            {% for variant in product.variants.all %}
+                                <option value="{{ variant.id }}">{{ variant.name }} - ${{ variant.price }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity:</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add to Cart</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<div class="row">
+    <div class="col-md-8">
+        <h3>Product Reviews</h3>
+        <a href="{% url 'reviews:create_review' product.id %}" class="btn btn-success mb-3">Write a Review</a>
+        {% for review in product.reviews.all %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ review.title }}</h5>
+                    <div class="mb-2">
+                        {% for i in "12345"|make_list %}
+                            <i class="fas fa-star {% if i|add:"0" <= review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                    <h6 class="card-subtitle mb-2 text-muted">By {{ review.user.email }} on {{ review.created_at|date:"F d, Y" }}</h6>
+                    <p class="card-text">{{ review.body }}</p>
+                </div>
+            </div>
+        {% empty %}
+            <p>No reviews yet. Be the first to write one!</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'pages:index' %}">MyShop</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="main-nav">
+            <!-- Left Aligned Links -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'catalog:product_list' %}">Products</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="categories-dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Categories
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="categories-dropdown">
+                        <!-- These links will now filter the product list page -->
+                        <li><a class="dropdown-item" href="{% url 'catalog:product_list' %}?category=1">Electronics</a></li>
+                        <li><a class="dropdown-item" href="{% url 'catalog:product_list' %}?category=2">Clothing</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'catalog:product_list' %}">All Categories</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <!-- Search Bar in the middle -->
+            <form class="d-flex mx-auto" action="{% url 'catalog:product_list' %}" method="get" style="max-width: 400px;">
+                <input class="form-control me-2" type="search" name="search" placeholder="Search for products..." aria-label="Search">
+                <button class="btn btn-outline-success" type="submit"><i class="fas fa-search"></i></button>
+            </form>
+
+            <!-- Right Aligned Icons -->
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/accounts/profile/">
+                        <i class="fas fa-user me-1"></i> Account
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link">
+                         {% include 'cart/_mini_cart.html' %}
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

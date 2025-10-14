@@ -1,0 +1,65 @@
+
+{% extends "base.html" %}
+
+{% block title %}Order #{{ order.id }} Details{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <h1>Order #{{ order.id }}</h1>
+            <p class="text-muted">Placed on: {{ order.placed_at|date:"F j, Y" }}</p>
+
+            <div class="card mb-4">
+                <div class="card-header">Order Summary</div>
+                <div class="card-body">
+                    <h5 class="card-title">Shipping Address</h5>
+                    <p>{{ order.shipping_address }}</p>
+                    <hr>
+                    <h5 class="card-title">Payment Information</h5>
+                    <p>Total: ${{ order.total|floatformat:2 }}</p>
+                     <p>Status: <span class="badge bg-secondary">{{ order.get_status_display }}</span></p>
+                </div>
+            </div>
+
+            <h3>Ordered Items</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                        <tr>
+                            <td>
+                                {{ item.variant.product.name }}
+                                {% if item.variant.name %}
+                                    <small class="text-muted">- {{ item.variant.name }}</small>
+                                {% endif %}
+                            </td>
+                            <td>${{ item.unit_price|floatformat:2 }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>${{ item.subtotal|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Order Actions</h5>
+                    <p>Track your order or contact customer support.</p>
+                    <a href="#" class="btn btn-info w-100 mb-2">Track Order</a>
+                    <a href="#" class="btn btn-secondary w-100">Contact Support</a>
+                </div>
+            </div>
+             <a href="{% url 'orders:order_list' %}" class="btn btn-link mt-3">&larr; Back to Order History</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

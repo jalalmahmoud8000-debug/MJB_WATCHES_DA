@@ -40,7 +40,7 @@ class UserUpdateForm(forms.ModelForm):
 class AddressForm(forms.ModelForm):
     class Meta:
         model = Address
-        fields = ['street', 'city', 'state', 'zip_code', 'country']
+        fields = ['street', 'city', 'state', 'postal_code', 'country']
 
 class PasswordChangeForm(admin_forms.PasswordChangeForm):
     pass

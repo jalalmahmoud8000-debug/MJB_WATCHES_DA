@@ -6,6 +6,29 @@ from .models import Address, User
 from django.core.exceptions import ValidationError
 
 
+class UserAdminChangeForm(admin_forms.UserChangeForm):
+    class Meta(admin_forms.UserChangeForm.Meta):
+        model = User
+
+
+class UserAdminCreationForm(admin_forms.UserCreationForm):
+    class Meta(admin_forms.UserCreationForm.Meta):
+        model = User
+        fields = ('email',)
+
+    error_messages = {
+        'duplicate_email': _("A user with that email already exists."),
+    }
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        try:
+            User.objects.get(email=email)
+        except User.DoesNotExist:
+            return email
+        raise forms.ValidationError(self.error_messages['duplicate_email'])
+
+
 class RegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label=_("Password"))
     password_confirm = forms.CharField(widget=forms.PasswordInput, label=_("Confirm Password"))

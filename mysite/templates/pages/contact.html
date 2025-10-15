@@ -1,17 +1,43 @@
 
 {% extends "base.html" %}
 
-{% block title %}Contact Us{% endblock %}
-
 {% block content %}
-<div class="container mt-5">
-    <h1>Contact Us</h1>
-    <p>Have a question or feedback? Fill out the form below to get in touch with us.</p>
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="mb-4">Contact Us</h1>
+            <p class="lead">Have a question or feedback? Fill out the form below to get in touch with us.</p>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_name" class="form-label">Name</label>
+                    {{ form.name }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_email" class="form-label">Email</label>
+                    {{ form.email }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_subject" class="form-label">Subject</label>
+                    {{ form.subject }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_message" class="form-label">Message</label>
+                    {{ form.message }}
+                </div>
+                <button type="submit" class="btn btn-primary">Send Message</button>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}

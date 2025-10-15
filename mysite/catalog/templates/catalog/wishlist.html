@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}My Wishlist{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">My Wishlist</h1>
+    {% if wishlist_items %}
+        <div class="row" id="wishlist-container">
+            {% for item in wishlist_items %}
+                <div class="col-md-4 mb-4" id="wishlist-item-{{ item.product.id }}">
+                    <div class="card">
+                        <a href="{{ item.product.get_absolute_url }}">
+                            {% if item.product.images.first.thumbnail %}
+                                <img src="{{ item.product.images.first.thumbnail.url }}" class="card-img-top" alt="{{ item.product.name }}">
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title"><a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a></h5>
+                            <p class="card-text">{{ item.product.description|truncatewords:20 }}</p>
+                            <button class="btn btn-danger remove-from-wishlist" data-product-id="{{ item.product.id }}">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Your wishlist is empty.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const removeButtons = document.querySelectorAll('.remove-from-wishlist');
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const url = "{% url 'catalog:remove_from_wishlist' %}";
+            const csrfToken = '{{ csrf_token }}';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const wishlistItem = document.getElementById(`wishlist-item-${productId}`);
+                    if (wishlistItem) {
+                        wishlistItem.remove();
+                    }
+                    const wishlistContainer = document.getElementById('wishlist-container');
+                    if (wishlistContainer.childElementCount === 0) {
+                        const container = document.querySelector('.container');
+                        const p = document.createElement('p');
+                        p.textContent = 'Your wishlist is empty.';
+                        container.appendChild(p);
+                    }
+                } else {
+                    console.error(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

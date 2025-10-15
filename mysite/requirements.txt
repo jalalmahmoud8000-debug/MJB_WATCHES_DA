@@ -16,3 +16,4 @@ django-environ
 django-redis
 django-mptt
 django-imagekit
+stripe

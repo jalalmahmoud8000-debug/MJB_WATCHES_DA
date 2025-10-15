@@ -24,25 +24,31 @@
                         <li><a class="dropdown-item" href="{% url 'catalog:product_list' %}">All Categories</a></li>
                     </ul>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'catalog:brand_list' %}">Brands</a>
+                </li>
             </ul>
 
             <!-- Search Bar in the middle -->
-            <form class="d-flex mx-auto" action="{% url 'catalog:product_list' %}" method="get" style="max-width: 400px;">
-                <input class="form-control me-2" type="search" name="search" placeholder="Search for products..." aria-label="Search">
+            <form class="d-flex mx-auto" action="{% url 'catalog:search_results' %}" method="get" style="max-width: 400px;">
+                <input class="form-control me-2" type="search" name="q" placeholder="Search for products..." aria-label="Search">
                 <button class="btn btn-outline-success" type="submit"><i class="fas fa-search"></i></button>
             </form>
 
             <!-- Right Aligned Icons -->
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'catalog:wishlist' %}">
+                        <i class="fas fa-heart me-1"></i> Wishlist
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/accounts/profile/">
                         <i class="fas fa-user me-1"></i> Account
                     </a>
                 </li>
                 <li class="nav-item">
-                    <div class="nav-link">
-                         {% include 'cart/_mini_cart.html' %}
-                    </div>
+                    {% include 'cart/_mini_cart.html' %}
                 </li>
             </ul>
         </div>

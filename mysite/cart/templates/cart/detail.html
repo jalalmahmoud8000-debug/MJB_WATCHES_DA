@@ -14,25 +14,112 @@
                     <th>Quantity</th>
                     <th>Unit Price</th>
                     <th>Subtotal</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in cart.items.all %}
-                    <tr>
+                    <tr id="cart-item-{{ item.id }}">
                         <td>{{ item.variant.product.name }} - {{ item.variant.name }}</td>
-                        <td>{{ item.quantity }}</td>
+                        <td>
+                            <input type="number" class="form-control quantity-input" data-item-id="{{ item.id }}" value="{{ item.quantity }}" min="1">
+                        </td>
                         <td>${{ item.variant.price }}</td>
-                        <td>${{ item.subtotal }}</td>
+                        <td id="subtotal-{{ item.id }}">${{ item.get_total_price }}</td>
+                        <td>
+                            <button class="btn btn-danger remove-item" data-item-id="{{ item.id }}">Remove</button>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
         <div class="text-right">
-            <h3>Total: ${{ cart.total_price }}</h3>
+            <h3>Total: <span id="cart-total">${{ cart.get_total_price }}</span></h3>
+            <a href="{% url 'cart:clear_cart' %}" class="btn btn-warning">Clear Cart</a>
             <a href="#" class="btn btn-success">Proceed to Checkout</a>
         </div>
     {% else %}
         <p>Your cart is empty.</p>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    const removeButtons = document.querySelectorAll('.remove-item');
+    const csrfToken = '{{ csrf_token }}';
+
+    quantityInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const itemId = this.dataset.itemId;
+            const quantity = this.value;
+            const url = "{% url 'cart:update_cart_item' %}";
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `item_id=${itemId}&quantity=${quantity}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById(`subtotal-${itemId}`).textContent = `$${data.item_total}`;
+                    document.getElementById('cart-total').textContent = `$${data.total}`;
+                    // Update mini cart if it exists
+                    const miniCart = document.getElementById('mini-cart');
+                    if (miniCart) {
+                        // Logic to update mini cart content
+                    }
+                } else {
+                    console.error(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const url = "{% url 'cart:remove_from_cart' %}";
+
+            if (confirm('Are you sure you want to remove this item?')) {
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: `item_id=${itemId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById(`cart-item-${itemId}`).remove();
+                        document.getElementById('cart-total').textContent = `$${data.total}`;
+                        // Update mini cart if it exists
+                        const miniCart = document.getElementById('mini-cart');
+                        if (miniCart) {
+                            // Logic to update mini cart content
+                        }
+                        const cartBody = document.querySelector('tbody');
+                        if (cartBody.childElementCount === 0) {
+                            const container = document.querySelector('.container');
+                            container.innerHTML = '<h1>Your Shopping Cart</h1><p>Your cart is empty.</p>';
+                        }
+                    } else {
+                        console.error(data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

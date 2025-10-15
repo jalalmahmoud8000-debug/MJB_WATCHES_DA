@@ -1,0 +1,12 @@
+
+{% extends "base.html" %}
+
+{% block title %}Payment Successful{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Payment Successful!</h1>
+    <p>Thank you for your order. Your payment for order #{{ order.id }} was successful.</p>
+    <p><a href="{% url 'orders:order_detail' order.id %}">View your order details</a></p>
+</div>
+{% endblock %}

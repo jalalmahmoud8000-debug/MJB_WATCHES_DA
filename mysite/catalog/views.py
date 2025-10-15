@@ -1,11 +1,16 @@
 
 from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .models import Product, Category
+from django.urls import reverse_lazy
+from .models import Product, Category, Brand, Wishlist
 from .filters import ProductFilter
 from cart.models import Cart, CartItem
-from django.views.generic import TemplateView, ListView
+from django.views.generic import TemplateView, ListView, DetailView
 from django.db.models import Count
+from django.db.models import Q
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 
 class HomeView(TemplateView):
     template_name = "pages/index.html"
@@ -24,76 +29,96 @@ class CategoryListView(ListView):
         """ Returns categories that have associated products. """
         return Category.objects.annotate(product_count=Count('products')).filter(product_count__gt=0)
 
+class BrandListView(ListView):
+    model = Brand
+    template_name = 'catalog/brand_list.html'
+    context_object_name = 'brands'
 
-def product_list(request):
-    """ 
-    Display a list of products, optionally filtered and sorted.
-    This view handles browsing all products, category-specific products, 
-    and search results.
-    """ 
-    # Start with all active products, prefetching primary images
-    queryset = Product.objects.filter(is_active=True).prefetch_related('images').distinct()
+    def get_queryset(self):
+        """ Returns brands that have associated products. """
+        return Brand.objects.annotate(product_count=Count('products')).filter(product_count__gt=0)
 
-    # Apply filters from the URL query parameters
-    product_filter = ProductFilter(request.GET, queryset=queryset)
-    
-    # The filtered queryset is what we will work with
-    filtered_queryset = product_filter.qs
+class CategoryDetailView(ListView):
+    model = Product
+    template_name = 'catalog/category_detail.html'
+    context_object_name = 'products'
+    paginate_by = 12
 
-    # Pagination
-    paginator = Paginator(filtered_queryset, 12) # Show 12 products per page
-    page_number = request.GET.get('page')
-    try:
-        products = paginator.page(page_number)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page.
-        products = paginator.page(1)
-    except EmptyPage:
-        # If page is out of range (e.g. 9999), deliver last page of results.
-        products = paginator.page(paginator.num_pages)
+    def get_queryset(self):
+        """Return the products for the current category."""
+        self.category = get_object_or_404(Category, slug=self.kwargs['slug'])
+        return Product.objects.filter(category=self.category, is_active=True).prefetch_related('images')
 
-    context = {
-        'filter': product_filter,
-        'products': products,
-    }
-    return render(request, 'catalog/product/list.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['category'] = self.category
+        return context
 
+class BrandDetailView(ListView):
+    model = Product
+    template_name = 'catalog/brand_detail.html'
+    context_object_name = 'products'
+    paginate_by = 12
 
-def product_detail(request, slug):
-    """ Display a single product detail page and handle adding to cart. """
-    product = get_object_or_404(
-        Product.objects.prefetch_related('images', 'variants'), 
-        slug=slug, 
-        is_active=True
-    )
-    
-    if request.method == 'POST':
+    def get_queryset(self):
+        """Return the products for the current brand."""
+        self.brand = get_object_or_404(Brand, slug=self.kwargs['slug'])
+        return Product.objects.filter(brand=self.brand, is_active=True).prefetch_related('images')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['brand'] = self.brand
+        return context
+
+class ProductListView(ListView):
+    model = Product
+    template_name = 'catalog/product/list.html'
+    context_object_name = 'products'
+    paginate_by = 12
+
+    def get_queryset(self):
+        queryset = Product.objects.filter(is_active=True).prefetch_related('images').distinct()
+        self.filter = ProductFilter(self.request.GET, queryset=queryset)
+        return self.filter.qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['filter'] = self.filter
+        return context
+
+class ProductDetailView(DetailView):
+    model = Product
+    template_name = 'catalog/product/detail.html'
+    context_object_name = 'product'
+
+    def get_queryset(self):
+        """Prefetch related images and variants to optimize performance."""
+        return super().get_queryset().prefetch_related('images', 'variants').filter(is_active=True)
+
+    def post(self, request, *args, **kwargs):
+        """Handle adding the product variant to the cart."""
+        self.object = self.get_object()
         variant_id = request.POST.get('variant_id')
         quantity = int(request.POST.get('quantity', 1))
-        
-        # Since variants are prefetched, we can get it from the product object
-        # This avoids an extra database query
-        variant = next((v for v in product.variants.all() if v.id == int(variant_id)), None)
-        
-        if not variant:
-            # Handle case where variant_id is invalid
-            # You might want to add an error message here
-            return redirect('catalog:product_detail', slug=product.slug)
 
-        # Get or create the cart
+        if not variant_id:
+            # Handle case where no variant is selected
+            # You might want to add a message to the user
+            return redirect(self.object.get_absolute_url())
+
+        variant = get_object_or_404(self.object.variants, id=variant_id)
+
         cart_id = request.session.get('cart_id')
         if cart_id:
             try:
                 cart = Cart.objects.get(id=cart_id)
             except Cart.DoesNotExist:
-                # If cart_id in session is invalid, create a new cart
-                cart = Cart.objects.create(user=request.user if request.user.is_authenticated else None)
-                request.session['cart_id'] = str(cart.id)
+                cart = self.create_cart(request.user)
         else:
-            cart = Cart.objects.create(user=request.user if request.user.is_authenticated else None)
-            request.session['cart_id'] = str(cart.id)
-            
-        # Get or create the cart item
+            cart = self.create_cart(request.user)
+        
+        request.session['cart_id'] = str(cart.id)
+
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart, 
             variant=variant,
@@ -101,15 +126,66 @@ def product_detail(request, slug):
         )
         
         if not created:
-            # If the item was already in the cart, update the quantity
             cart_item.quantity += quantity
             cart_item.save()
             
-        # Redirect to the cart detail page
         return redirect('cart:cart_detail')
 
-    # If it's a GET request, just display the page
-    context = {
-        'product': product,
-    }
-    return render(request, 'catalog/product/detail.html', context)
+    def create_cart(self, user):
+        """Create a new cart, associated with a user if authenticated."""
+        if user.is_authenticated:
+            return Cart.objects.create(user=user)
+        return Cart.objects.create()
+
+class SearchResultsView(ListView):
+    model = Product
+    template_name = 'catalog/product/search_results.html'
+    context_object_name = 'products'
+    paginate_by = 12
+
+    def get_queryset(self):
+        query = self.request.GET.get('q')
+        if query:
+            return Product.objects.filter(
+                Q(name__icontains=query) | Q(description__icontains=query),
+                is_active=True
+            ).prefetch_related('images').distinct()
+        return Product.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query'] = self.request.GET.get('q', '')
+        return context
+
+class WishlistView(LoginRequiredMixin, ListView):
+    model = Wishlist
+    template_name = 'catalog/wishlist.html'
+    context_object_name = 'wishlist_items'
+
+    def get_queryset(self):
+        return Wishlist.objects.filter(user=self.request.user)
+
+@login_required
+def add_to_wishlist(request):
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        product = get_object_or_404(Product, id=product_id)
+        wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+        if created:
+            return JsonResponse({'status': 'success', 'message': 'Product added to wishlist.'})
+        else:
+            return JsonResponse({'status': 'warning', 'message': 'Product already in wishlist.'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request.'})
+
+@login_required
+def remove_from_wishlist(request):
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        product = get_object_or_404(Product, id=product_id)
+        try:
+            wishlist_item = Wishlist.objects.get(user=request.user, product=product)
+            wishlist_item.delete()
+            return JsonResponse({'status': 'success', 'message': 'Product removed from wishlist.'})
+        except Wishlist.DoesNotExist:
+            return JsonResponse({'status': 'warning', 'message': 'Product not in wishlist.'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request.'})

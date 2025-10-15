@@ -1,0 +1,6 @@
+{% load cart_tags %}
+
+<a class="nav-link" href="{% url 'cart:cart_detail' %}">
+    <i class="fas fa-shopping-cart me-1"></i> Cart
+    <span class="badge bg-secondary" id="cart-item-count">{% cart_item_count %}</span>
+</a>

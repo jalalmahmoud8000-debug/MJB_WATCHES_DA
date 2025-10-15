@@ -4,7 +4,8 @@ from rest_framework import serializers
 from catalog.models import Product, Category, ProductVariant, ProductImage
 from accounts.models import User
 from orders.models import Order, OrderItem
-
+from reviews.models import Review
+from pages.models import Contact
 
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -50,6 +51,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['id', 'product_name', 'quantity', 'price']
 
+
 # Optimized for displaying orders
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
@@ -58,6 +60,20 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'user', 'status', 'total', 'placed_at', 'items']
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'product', 'rating', 'comment', 'created_at']
+        read_only_fields = ['user']
+
+    def create(self, validated_data):
+        # Associate the review with the logged-in user
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
 
 # --- Serializers for Writing Data ---
 
@@ -119,3 +135,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             order.save()
 
         return order
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = ['name', 'email', 'subject', 'message']
+

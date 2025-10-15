@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Search Results for "{{ query }}"
+{% endblock %}
+
+{% block content %}
+    <div class="product-list">
+        <h1 class="mb-4">Search Results for "{{ query }}"</h1>
+        {% if products %}
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for product in products %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <a href="{{ product.get_absolute_url }}">
+                                {% if product.images.all %}
+                                    {% for image in product.images.all %}
+                                        {% if image.is_primary %}
+                                        <img src="{{ image.thumbnail.url }}" class="card-img-top" alt="{{ image.alt_text|default:product.name }}" loading="lazy">
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <img src="https://via.placeholder.com/150x150.png?text=No+Image" class="card-img-top" alt="No image available" loading="lazy">
+                                {% endif %}
+                            </a>
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-dark">{{ product.name }}</a>
+                                </h5>
+                                <p class="card-text text-muted">${{ product.price }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No products found matching your search.</p>
+        {% endif %}
+    </div>
+{% endblock %}

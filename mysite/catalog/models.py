@@ -6,6 +6,8 @@ import os
 from mptt.models import MPTTModel, TreeForeignKey
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
+from django.urls import reverse
+from django.contrib.auth.models import User
 
 def product_image_path(instance, filename):
     """
@@ -54,6 +56,9 @@ class Brand(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def get_absolute_url(self):
+        return reverse('catalog:brand_detail', kwargs={'slug': self.slug})
 
 
 class Product(models.Model):
@@ -128,3 +133,15 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return self.alt_text or f"Image for {self.product.name}"
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlist_items')
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+        ordering = ['-added_at']
+
+    def __str__(self):
+        return f'{self.user.username}\'s wishlist: {self.product.name}'

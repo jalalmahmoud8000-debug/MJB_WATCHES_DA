@@ -1,0 +1,140 @@
+
+{% extends "seller_dashboard/base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">{{ title }}</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item active">{{ title }}</li>
+    </ol>
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="me-3">
+                            <div class="text-white-75 small">Sales (Today)</div>
+                            <div class="text-lg fw-bold">${{ today_sales|floatformat:2 }}</div>
+                        </div>
+                        <i class="fas fa-shopping-cart fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="me-3">
+                            <div class="text-white-75 small">Total Sales</div>
+                            <div class="text-lg fw-bold">${{ stats.total_sales|floatformat:2 }}</div>
+                        </div>
+                        <i class="fas fa-dollar-sign fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="me-3">
+                            <div class="text-white-75 small">Pending Orders</div>
+                            <div class="text-lg fw-bold">{{ stats.pending_orders }}</div>
+                        </div>
+                        <i class="fas fa-pause-circle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="me-3">
+                            <div class="text-white-75 small">Total Orders</div>
+                            <div class="text-lg fw-bold">{{ stats.total_orders }}</div>
+                        </div>
+                        <i class="fas fa-receipt fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Recent Orders
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td><a href="{% url 'seller_dashboard:order_detail' order.id %}">{{ order.id }}</a></td>
+                                    <td>${{ order.total|floatformat:2 }}</td>
+                                    <td><span class="badge bg-{{ order.get_status_badge }}">{{ order.status|title }}</span></td>
+                                    <td>{{ order.placed_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No recent orders.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Low Stock Items (Threshold: &lt; {{ low_stock_threshold }})
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Variant</th>
+                                    <th>Stock</th>
+                                    <th>SKU</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for variant in low_stock_items %}
+                                <tr>
+                                    <td>{{ variant.product.name }}</td>
+                                    <td>{{ variant.name }}</td>
+                                    <td><span class="badge bg-danger">{{ variant.stock }}</span></td>
+                                    <td>{{ variant.sku }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No items are low on stock.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Brands
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="my-4">Brands</h1>
+        <div class="list-group">
+            {% for brand in brands %}
+                <a href="{{ brand.get_absolute_url }}" class="list-group-item list-group-item-action">
+                    {{ brand.name }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

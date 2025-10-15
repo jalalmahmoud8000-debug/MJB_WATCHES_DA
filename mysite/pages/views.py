@@ -7,6 +7,10 @@ from django.views.generic import FormView, TemplateView
 from .forms import ContactForm
 
 
+class IndexView(TemplateView):
+    template_name = "pages/index.html"
+
+
 class AboutView(TemplateView):
     template_name = "pages/about.html"
 
